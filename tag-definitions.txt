@@ -1,0 +1,57 @@
+#ai                           catchall for artificial intelligence related products, tools, resources, etc
+#agents                       AI agent frameworks, implementations, and agentic workflows
+#oss                          Open source software projects and libraries
+#coding                       Development tools, programming resources, and coding utilities
+#cli                          Command line interfaces and terminal tools
+#heap                         Resources related to the Heap project and development
+#framework                    Software frameworks and development platforms
+#ide                          Integrated development environments and code editors
+#prompt-engineering           Techniques and tools for crafting effective AI prompts
+#documents                    Document processing, management, and generation tools
+#mcp                          Model Context Protocol related resources
+#psychology                   Human psychology, behavior, and AI interaction studies
+#arch                         Software architecture, system design, and technical patterns
+#ops                          DevOps, operations, deployment, and infrastructure tools
+#context-management           Tools and techniques for managing context in AI systems
+#sandbox                      Code execution environments and isolated runtime systems
+#alignment                    AI alignment, safety, and responsible AI development
+#autocomplete                 Code completion tools and intelligent text suggestions
+#browser                      Web browser tools, extensions, and browser-related resources
+#canvas                       Digital canvas and drawing tools, creative interfaces
+#cloud                        Cloud computing platforms, services, and infrastructure
+#codegen                      Code generation tools and automated programming assistants
+#collection                   Tools for organizing, collecting, and curating content
+#creation                     Content creation tools and creative workflows
+#deep-research                ai-automated web research
+#editor                       Text editors, code editors, and content editing tools
+#evals                        AI model evaluation, testing, and benchmarking tools
+#extension                    Browser extensions/addons, or web browser tech/issues
+#firefox                      Firefox browser
+#flipbook                     my flipbook personal file manager concept
+#learning                     Educational resources, learning tools, and skill development
+#llama                        Meta's LLaMA language models and related resources
+#local                        Local tools and offline-first applications esp for local+ai
+#macos                        macOS specific applications, tools, and system utilities
+#model                        AI models, model architectures, and model-related resources
+#multimodal                   AI systems that work with multiple input/output modalities
+#music                        Music creation, audio tools, and sound generation
+#nocode                       No-code and low-code development platforms and tools
+#notes                        Note-taking applications and knowledge management systems
+#orchestration                System orchestration, workflow management, and automation
+#paper                        Academic papers, research publications, and scholarly articles
+#privacy                      user data privacy
+#python                       Python programming language
+#speech                       Speech recognition, text-to-speech, and voice interfaces
+#startup                      Startups, entrepreneurship, and business
+#storium                      Interactive storytelling platform and narrative tools
+#telepath                     specific or highly related to my startup, called Telepath, which deals in the future of computing and interfaces and the first principles of computer interaction for the augmentation of human capability
+#toread                       to read later
+#trends                       Industry and cultural trends, emerging technologies, and market analysis
+#typescript                   TypeScript programming language
+#ui                           User interface
+#utils                        General utility tools, helper scripts, and productivity aids
+#ux                           User experience. see #ui too
+#vibecoding                   writing generated software without coding or low-effort coding
+#video                        video content, and/or video production/generation
+#webdev                       Web development tools, frameworks, and resources
+#webofagents                  my web of agents concepts/theories

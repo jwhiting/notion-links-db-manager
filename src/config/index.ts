@@ -8,12 +8,18 @@ interface Config {
     apiKey: string;
     databaseId: string;
   };
+  openai: {
+    apiKey: string;
+  };
 }
 
 const config: Config = {
   notion: {
     apiKey: process.env['NOTION_API_KEY'] || '',
     databaseId: process.env['NOTION_DATABASE_ID'] || '',
+  },
+  openai: {
+    apiKey: process.env['OPENAI_API_KEY'] || '',
   },
 };
 
@@ -27,4 +33,12 @@ const validateConfig = (): void => {
   }
 };
 
-export { config, validateConfig };
+// Validate configuration including OpenAI API key for AI features
+const validateConfigWithAI = (): void => {
+  validateConfig();
+  if (!config.openai.apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is required for AI features');
+  }
+};
+
+export { config, validateConfig, validateConfigWithAI };
