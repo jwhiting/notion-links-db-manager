@@ -1,12 +1,14 @@
 import { logger, LogLevel } from './utils/logger';
 import { runListRecentCommand } from './commands/list-recent';
 import { runAnalyzeCommand } from './commands/analyze';
+import { runSearchCommand } from './commands/search';
+import { runListTagsCommand } from './commands/list-tags';
 
 /**
  * Main entry point - routes to different commands based on arguments
  */
 
-type Command = 'list-recent' | 'analyze' | 'help';
+type Command = 'list-recent' | 'analyze' | 'search' | 'list-tags' | 'help';
 
 function printHelp(): void {
   console.log(`
@@ -16,13 +18,23 @@ Usage: npm run dev [command] [options]
 
 Commands:
   list-recent    List the most recent bookmarks (default: 20)
+  list-tags      List all unique tags with usage counts
   analyze        Analyze database structure and sample content  
+  search         Search bookmarks (use search --help for options)
   help           Show this help message
 
 Examples:
   npm run dev list-recent
+  npm run dev list-tags
   npm run dev analyze
+  npm run dev search --tag ai
   npm run dev help
+
+Standalone scripts:
+  npm run list-tags
+  npm run search-by-tag ai                    # Single tag
+  npm run search-by-tag ai agents             # Multiple tags (AND)
+  npm run search-by-any-tag coding ide cli    # Multiple tags (OR)
 `);
 }
 
@@ -46,8 +58,24 @@ async function main(): Promise<void> {
         });
         break;
 
+      case 'list-tags':
+        await runListTagsCommand({
+          showCounts: true,
+          sortBy: 'count',
+          sortDirection: 'desc',
+        });
+        break;
+
       case 'analyze':
         await runAnalyzeCommand();
+        break;
+
+      case 'search':
+        // Simple search for attention bookmarks as demo
+        await runSearchCommand({
+          attention: true,
+          limit: 20,
+        });
         break;
 
       case 'help':

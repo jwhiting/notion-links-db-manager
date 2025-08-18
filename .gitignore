@@ -16,6 +16,9 @@ build/
 .env.test.local
 .env.production.local
 
+# Log level configuration
+.loglevel
+
 # IDE files
 .vscode/
 .idea/
