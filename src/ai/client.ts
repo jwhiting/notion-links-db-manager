@@ -1,6 +1,8 @@
 import { openai } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+import { CacheManager } from '../cache/manager';
+import { createBookmarkFingerprint } from '../cache/types';
 
 /**
  * AI client for tag suggestions using OpenAI via Vercel AI SDK
@@ -15,7 +17,7 @@ export const TagSuggestionsSchema = z.object({
 export type TagSuggestions = z.infer<typeof TagSuggestionsSchema>;
 
 /**
- * Generate tag suggestions for a bookmark using AI
+ * Generate tag suggestions for a bookmark using AI (with caching)
  */
 export async function suggestTagsForBookmark(
   bookmarkData: {
@@ -27,15 +29,50 @@ export async function suggestTagsForBookmark(
     quotes: string;
     why: string;
   },
-  availableTags: Array<{ tag: string; description: string }>
+  availableTags: Array<{ tag: string; description: string }>,
+  options?: {
+    bookmarkId?: string;
+    lastEditedTime?: Date;
+    useCache?: boolean;
+    cacheType?: 'untagged' | 'tag-specific';
+    targetTag?: string;
+  }
 ): Promise<TagSuggestions> {
+  const cacheManager = new CacheManager();
+  
+  // Try cache first if enabled and we have bookmark metadata
+  if (options?.useCache && options.bookmarkId && options.lastEditedTime) {
+    const fingerprint = createBookmarkFingerprint({
+      id: options.bookmarkId,
+      properties: {
+        name: bookmarkData.title,
+        url: bookmarkData.url,
+        notes: bookmarkData.notes,
+        tags: bookmarkData.currentTags,
+        what: bookmarkData.what,
+        quotes: bookmarkData.quotes,
+        why: bookmarkData.why,
+      },
+      lastEditedTime: options.lastEditedTime,
+    });
+
+    const cached = cacheManager.getCachedTagSuggestions(
+      fingerprint, 
+      options.cacheType || 'untagged',
+      options.targetTag
+    );
+
+    if (cached) {
+      return cached;
+    }
+  }
 
   const availableTagsText = availableTags
-    .map(({ tag, description }) => `#${tag}: ${description}`)
+    .map(({ tag, description }) => `${tag}: ${description}`)
     .join('\n');
 
   const currentTagsText = bookmarkData.currentTags.length > 0 
-    ? bookmarkData.currentTags.map(tag => `#${tag}`).join(', ')
+    ? bookmarkData.currentTags.join(', ')
     : 'None';
 
   const prompt = `You are a bookmark tagging assistant. Your job is to suggest additional relevant tags for bookmarks based on their content and context.
@@ -78,14 +115,39 @@ Focus on tags that would help someone:
     // - nondeterministic MoE routing?
     // - not really sure. general consensus online is that there is no way to make it deterministic.
     temperature: 0,
-    seed: 42,
   } as any);
 
-  return result.object as TagSuggestions;
+  const suggestions = result.object as TagSuggestions;
+
+  // Cache the result if we have the metadata
+  if (options?.bookmarkId && options.lastEditedTime) {
+    const fingerprint = createBookmarkFingerprint({
+      id: options.bookmarkId,
+      properties: {
+        name: bookmarkData.title,
+        url: bookmarkData.url,
+        notes: bookmarkData.notes,
+        tags: bookmarkData.currentTags,
+        what: bookmarkData.what,
+        quotes: bookmarkData.quotes,
+        why: bookmarkData.why,
+      },
+      lastEditedTime: options.lastEditedTime,
+    });
+
+    cacheManager.cacheTagSuggestions(
+      fingerprint,
+      suggestions,
+      options.cacheType || 'untagged',
+      options.targetTag
+    );
+  }
+
+  return suggestions;
 }
 
 /**
- * Check if a bookmark should have a specific tag
+ * Check if a bookmark should have a specific tag (with caching)
  */
 export async function shouldBookmarkHaveTag(
   bookmarkData: {
@@ -97,11 +159,39 @@ export async function shouldBookmarkHaveTag(
     quotes: string;
     why: string;
   },
-  targetTag: { tag: string; description: string }
+  targetTag: { tag: string; description: string },
+  options?: {
+    bookmarkId?: string;
+    lastEditedTime?: Date;
+    useCache?: boolean;
+  }
 ): Promise<{ shouldHaveTag: boolean; reasoning: string }> {
+  const cacheManager = new CacheManager();
+  
+  // Try cache first if enabled and we have bookmark metadata
+  if (options?.useCache && options.bookmarkId && options.lastEditedTime) {
+    const fingerprint = createBookmarkFingerprint({
+      id: options.bookmarkId,
+      properties: {
+        name: bookmarkData.title,
+        url: bookmarkData.url,
+        notes: bookmarkData.notes,
+        tags: bookmarkData.currentTags,
+        what: bookmarkData.what,
+        quotes: bookmarkData.quotes,
+        why: bookmarkData.why,
+      },
+      lastEditedTime: options.lastEditedTime,
+    });
+
+    const cached = cacheManager.getCachedTagApplication(fingerprint, targetTag.tag);
+    if (cached) {
+      return cached;
+    }
+  }
 
   const currentTagsText = bookmarkData.currentTags.length > 0 
-    ? bookmarkData.currentTags.map(tag => `#${tag}`).join(', ')
+    ? bookmarkData.currentTags.join(', ')
     : 'None';
 
   const prompt = `You are a bookmark tagging assistant. Your job is to determine if a specific tag should be applied to a bookmark.
@@ -116,9 +206,9 @@ Quotes: ${bookmarkData.quotes || 'None'}
 Why: ${bookmarkData.why || 'None'}
 
 TARGET TAG TO EVALUATE:
-#${targetTag.tag}: ${targetTag.description}
+${targetTag.tag}: ${targetTag.description}
 
-QUESTION: Should this bookmark have the tag "#${targetTag.tag}"?
+QUESTION: Should this bookmark have the tag "${targetTag.tag}"?
 
 INSTRUCTIONS:
 1. Analyze if the bookmark's content, purpose, or context relates to the tag's meaning
@@ -127,7 +217,7 @@ INSTRUCTIONS:
 4. Be reasonably generous - if there's a meaningful connection, suggest the tag
 5. Respond with true/false and explain your reasoning
 
-The tag should be applied if this bookmark would be valuable to someone exploring the "${targetTag.description}" topic.`;
+The tag "${targetTag.tag}" should be applied if this bookmark would be valuable to someone exploring the "${targetTag.description}" topic.`;
 
   const ResponseSchema = z.object({
     reasoning: z.string().describe('Explanation of why the tag should or should not be applied'),
@@ -139,8 +229,28 @@ The tag should be applied if this bookmark would be valuable to someone explorin
     schema: ResponseSchema,
     prompt,
     temperature: 0,
-    seed: 42,
   } as any);
 
-  return result.object as { shouldHaveTag: boolean; reasoning: string };
+  const decision = result.object as { shouldHaveTag: boolean; reasoning: string };
+
+  // Cache the result if we have the metadata
+  if (options?.bookmarkId && options.lastEditedTime) {
+    const fingerprint = createBookmarkFingerprint({
+      id: options.bookmarkId,
+      properties: {
+        name: bookmarkData.title,
+        url: bookmarkData.url,
+        notes: bookmarkData.notes,
+        tags: bookmarkData.currentTags,
+        what: bookmarkData.what,
+        quotes: bookmarkData.quotes,
+        why: bookmarkData.why,
+      },
+      lastEditedTime: options.lastEditedTime,
+    });
+
+    cacheManager.cacheTagApplication(fingerprint, targetTag.tag, decision);
+  }
+
+  return decision;
 }

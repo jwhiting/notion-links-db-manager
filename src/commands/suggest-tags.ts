@@ -35,7 +35,7 @@ export async function suggestTagsForBookmarkCommand(
 
     console.log(`\n🤖 Getting AI tag suggestions for bookmark...`);
 
-    // Get AI suggestions
+    // Get AI suggestions (with caching)
     const suggestions = await suggestTagsForBookmark(
       {
         title: bookmark.properties.name,
@@ -46,7 +46,13 @@ export async function suggestTagsForBookmarkCommand(
         quotes: bookmark.properties.quotes,
         why: bookmark.properties.why,
       },
-      availableTags
+      availableTags,
+      {
+        bookmarkId: bookmark.id,
+        lastEditedTime: bookmark.lastEditedTime,
+        useCache: true,
+        cacheType: 'untagged',
+      }
     );
 
     // Filter out tags that are already applied
@@ -76,7 +82,7 @@ export async function suggestTagsForBookmarkCommand(
     console.log(`\n📝 Adding ${result.selectedTags.length} tags to bookmark...`);
     await updater.addTagsToBookmark(bookmark.id, result.selectedTags);
     
-    console.log(`✅ Successfully added tags: ${result.selectedTags.map(tag => `#${tag}`).join(', ')}`);
+    console.log(`✅ Successfully added tags: ${result.selectedTags.join(', ')}`);
 
   } catch (error) {
     logger.error('Failed to suggest tags for bookmark:', error);
@@ -124,7 +130,7 @@ export async function findBookmarksForTagCommand(
       showProgress(processedCount, candidateBookmarks.length, bookmark.properties.name);
 
       try {
-        // Ask AI if this bookmark should have the tag
+        // Ask AI if this bookmark should have the tag (with caching)
         const aiResult = await shouldBookmarkHaveTag(
           {
             title: bookmark.properties.name,
@@ -135,7 +141,12 @@ export async function findBookmarksForTagCommand(
             quotes: bookmark.properties.quotes,
             why: bookmark.properties.why,
           },
-          { tag: targetTag, description: tagDescription }
+          { tag: targetTag, description: tagDescription },
+          {
+            bookmarkId: bookmark.id,
+            lastEditedTime: bookmark.lastEditedTime,
+            useCache: true,
+          }
         );
 
         if (!aiResult.shouldHaveTag) {
@@ -158,7 +169,7 @@ export async function findBookmarksForTagCommand(
         if (userResult.response === 'yes') {
           await updater.addTagToBookmark(bookmark.id, targetTag);
           addedCount++;
-          console.log(`✅ Added tag #${targetTag} to bookmark`);
+          console.log(`✅ Added tag ${targetTag} to bookmark`);
         }
 
       } catch (error) {
@@ -167,7 +178,7 @@ export async function findBookmarksForTagCommand(
       }
     }
 
-    console.log(`\n🎉 Completed! Added tag #${targetTag} to ${addedCount} bookmarks out of ${processedCount} analyzed.`);
+    console.log(`\n🎉 Completed! Added tag ${targetTag} to ${addedCount} bookmarks out of ${processedCount} analyzed.`);
 
   } catch (error) {
     logger.error('Failed to find bookmarks for tag:', error);
@@ -207,7 +218,7 @@ export async function suggestTagsForUntaggedCommand(client: NotionClient): Promi
       showProgress(processedCount, untaggedBookmarks.length, bookmark.properties.name);
 
       try {
-        // Get AI suggestions for this bookmark
+        // Get AI suggestions for this bookmark (with caching)
         const suggestions = await suggestTagsForBookmark(
           {
             title: bookmark.properties.name,
@@ -218,7 +229,13 @@ export async function suggestTagsForUntaggedCommand(client: NotionClient): Promi
             quotes: bookmark.properties.quotes,
             why: bookmark.properties.why,
           },
-          availableTags
+          availableTags,
+          {
+            bookmarkId: bookmark.id,
+            lastEditedTime: bookmark.lastEditedTime,
+            useCache: true,
+            cacheType: 'untagged',
+          }
         );
 
         if (suggestions.suggestedTags.length === 0) {
@@ -242,7 +259,7 @@ export async function suggestTagsForUntaggedCommand(client: NotionClient): Promi
         if (result.response !== 'reject-all' && result.selectedTags && result.selectedTags.length > 0) {
           await updater.addTagsToBookmark(bookmark.id, result.selectedTags);
           taggedCount++;
-          console.log(`✅ Added ${result.selectedTags.length} tags: ${result.selectedTags.map(tag => `#${tag}`).join(', ')}`);
+          console.log(`✅ Added ${result.selectedTags.length} tags: ${result.selectedTags.join(', ')}`);
         }
 
       } catch (error) {

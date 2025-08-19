@@ -3,7 +3,7 @@ import * as path from 'path';
 
 /**
  * Utilities for working with tag definitions from tag-definitions.txt
- * Format: #tag-name Description of what this tag means
+ * Format: tag-name Description of what this tag means
  */
 
 export interface TagDefinition {
@@ -35,12 +35,14 @@ export function loadTagDefinitions(): Map<string, string> {
     
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed && trimmed.startsWith('#')) {
+      if (trimmed && !trimmed.startsWith('#') && trimmed.length > 0) {
         const spaceIndex = trimmed.indexOf(' ');
         if (spaceIndex > 0) {
-          const tag = trimmed.substring(1, spaceIndex); // Remove # and get tag name
+          const tag = trimmed.substring(0, spaceIndex).trim();
           const description = trimmed.substring(spaceIndex + 1).trim();
-          definitions.set(tag, description);
+          if (tag && description) {
+            definitions.set(tag, description);
+          }
         }
       }
     }

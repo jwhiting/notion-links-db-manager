@@ -25,7 +25,7 @@ export class NotionUpdater {
     }
 
     try {
-      logger.info(`Adding tags to bookmark ${bookmarkId}: ${newTags.map(tag => `#${tag}`).join(', ')}`);
+      logger.info(`Adding tags to bookmark ${bookmarkId}: ${newTags.join(', ')}`);
 
       // First, get the current tags
       const page = await this.client.pages.retrieve({ page_id: bookmarkId });
@@ -74,7 +74,7 @@ export class NotionUpdater {
    */
   async replaceTagsOnBookmark(bookmarkId: string, tags: string[]): Promise<void> {
     try {
-      logger.info(`Replacing all tags on bookmark ${bookmarkId} with: ${tags.map(tag => `#${tag}`).join(', ')}`);
+      logger.info(`Replacing all tags on bookmark ${bookmarkId} with: ${tags.join(', ')}`);
 
       await this.client.pages.update({
         page_id: bookmarkId,
@@ -103,7 +103,7 @@ export class NotionUpdater {
     }
 
     try {
-      logger.info(`Removing tags from bookmark ${bookmarkId}: ${tagsToRemove.map(tag => `#${tag}`).join(', ')}`);
+      logger.info(`Removing tags from bookmark ${bookmarkId}: ${tagsToRemove.join(', ')}`);
 
       // First, get the current tags
       const page = await this.client.pages.retrieve({ page_id: bookmarkId });

@@ -51,7 +51,7 @@ export async function checkUndefinedTags(client: NotionClient): Promise<void> {
       });
       
       console.log(`\nTo define these tags, add lines to tag-definitions.txt like:`);
-      console.log(`#${undefinedTags[0]} Description of what this tag means`);
+      console.log(`${undefinedTags[0]} Description of what this tag means`);
     } else {
       console.log('\n✅ All tags are defined! No undefined tags found.');
     }
@@ -61,7 +61,7 @@ export async function checkUndefinedTags(client: NotionClient): Promise<void> {
     if (definitions.length > 0) {
       console.log('\n=== SAMPLE DEFINED TAGS ===');
       definitions.slice(0, 5).forEach(({ tag, description }) => {
-        console.log(`#${tag} ${description}`);
+        console.log(`${tag} ${description}`);
       });
       
       if (definitions.length > 5) {
@@ -84,14 +84,14 @@ export async function showTagDefinitions(): Promise<void> {
     
     if (definitions.length === 0) {
       console.log('No tag definitions found. Create tag-definitions.txt to define your tags.');
-      console.log('\nFormat: #tag-name Description of what this tag means');
+      console.log('\nFormat: tag-name Description of what this tag means');
       return;
     }
 
     console.log(`\n=== ALL TAG DEFINITIONS (${definitions.length} tags) ===\n`);
     
     definitions.forEach(({ tag, description }) => {
-      console.log(`#${tag} ${description}`);
+      console.log(`${tag} ${description}`);
     });
 
   } catch (error) {
@@ -108,11 +108,11 @@ export async function lookupTag(tag: string): Promise<void> {
     const description = getTagDescription(tag);
     
     if (description) {
-      console.log(`\n#${tag} ${description}`);
+      console.log(`\n${tag} ${description}`);
     } else {
       console.log(`\nTag "${tag}" is not defined in tag-definitions.txt`);
       console.log(`\nTo define it, add a line like:`);
-      console.log(`#${tag} Description of what this tag means`);
+      console.log(`${tag} Description of what this tag means`);
     }
 
   } catch (error) {

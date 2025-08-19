@@ -19,6 +19,9 @@ build/
 # Log level configuration
 .loglevel
 
+# AI cache directory
+.ai-cache/
+
 # IDE files
 .vscode/
 .idea/

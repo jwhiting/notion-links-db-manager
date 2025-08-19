@@ -54,7 +54,7 @@ export function displayBookmark(bookmark: Bookmark): void {
   console.log(`Created: ${bookmark.properties.created?.toLocaleDateString() || 'Unknown'}`);
   
   if (bookmark.properties.tags.length > 0) {
-    console.log(`Current Tags: ${bookmark.properties.tags.map(tag => `#${tag}`).join(', ')}`);
+    console.log(`Current Tags: ${bookmark.properties.tags.join(', ')}`);
   } else {
     console.log('Current Tags: None');
   }
@@ -102,20 +102,20 @@ export async function promptTagSuggestions(prompt: TagSuggestionPrompt): Promise
     
     console.log('Suggested Tags:');
     prompt.suggestedTags.forEach((tag, index) => {
-      console.log(`  ${index + 1}. #${tag}`);
+      console.log(`  ${index + 1}. ${tag}`);
     });
     
     // Show all available tags for reference
     if (prompt.availableTags && prompt.availableTags.length > 0) {
       console.log('\nAll Available Tags:');
-      const tagDisplay = prompt.availableTags.map(tag => `#${tag}`).join(' ');
+      const tagDisplay = prompt.availableTags.join(' ');
       console.log(`${tagDisplay}`);
     }
     
     console.log('\nOptions:');
     console.log('  all = Accept all suggestions');
     console.log('  none = Reject all suggestions');
-    console.log('  [numbers & tags] = Select by numbers and/or custom tags (e.g., "1 3 #foobar" or "2,4 #ai #coding")');
+    console.log('  [numbers & tags] = Select by numbers and/or custom tags (e.g., "1 3 foobar" or "2,4 ai coding")');
     console.log('  q = Quit');
     
     const response = await askQuestion(rl, '\nYour choice: ');
@@ -133,20 +133,14 @@ export async function promptTagSuggestions(prompt: TagSuggestionPrompt): Promise
       return { response: 'reject-all', selectedTags: [] };
     }
     
-    // Parse mixed input: numbers and custom tags (e.g., "1 3 #foobar #coding")
+    // Parse mixed input: numbers and custom tags (e.g., "1 3 foobar coding")
     const selectedTags: string[] = [];
     
     // Split by spaces and commas, filter out empty strings
     const tokens = response.split(/[\s,]+/).filter(n => n.length > 0);
     
     for (const token of tokens) {
-      if (token.startsWith('#')) {
-        // Custom tag - remove the # prefix
-        const customTag = token.substring(1);
-        if (customTag && !selectedTags.includes(customTag)) {
-          selectedTags.push(customTag);
-        }
-      } else if (/^\d+$/.test(token)) {
+      if (/^\d+$/.test(token)) {
         // Number - map to suggested tag
         const num = parseInt(token, 10);
         if (num >= 1 && num <= prompt.suggestedTags.length) {
@@ -158,12 +152,20 @@ export async function promptTagSuggestions(prompt: TagSuggestionPrompt): Promise
           console.log(`⚠️  Invalid tag number: ${num} (valid range: 1-${prompt.suggestedTags.length})`);
         }
       } else {
-        console.log(`⚠️  Invalid token: "${token}" (use numbers or #tag format)`);
+        // Custom tag - any non-numeric string (except reserved words)
+        const lowerToken = token.toLowerCase();
+        if (lowerToken === 'all' || lowerToken === 'none' || lowerToken === 'q' || lowerToken === 'quit') {
+          console.log(`⚠️  Reserved word: "${token}" (use numbers or plain tag names)`);
+        } else {
+          if (!selectedTags.includes(token)) {
+            selectedTags.push(token);
+          }
+        }
       }
     }
     
     if (selectedTags.length > 0) {
-      console.log(`✅ Selected ${selectedTags.length} tag${selectedTags.length === 1 ? '' : 's'}: ${selectedTags.map(tag => `#${tag}`).join(', ')}`);
+      console.log(`✅ Selected ${selectedTags.length} tag${selectedTags.length === 1 ? '' : 's'}: ${selectedTags.join(', ')}`);
       return { response: 'selective', selectedTags };
     } else {
       console.log('No valid tags selected.');
@@ -185,7 +187,7 @@ export async function promptTagApplication(prompt: TagApplicationPrompt): Promis
   try {
     displayBookmark(prompt.bookmark);
     
-    console.log('\n' + `🏷️  TAG APPLICATION: #${prompt.targetTag}`.padEnd(60, '='));
+    console.log('\n' + `🏷️  TAG APPLICATION: ${prompt.targetTag}`.padEnd(60, '='));
     console.log(`Reasoning: ${prompt.reasoning}\n`);
     
     console.log('Options:');
@@ -193,7 +195,7 @@ export async function promptTagApplication(prompt: TagApplicationPrompt): Promis
     console.log('  n = Skip this bookmark');
     console.log('  q = Quit');
     
-    const response = await askQuestion(rl, `\nAdd tag #${prompt.targetTag} to this bookmark? (y/n/q): `);
+    const response = await askQuestion(rl, `\nAdd tag ${prompt.targetTag} to this bookmark? (y/n/q): `);
     const lowerResponse = response.toLowerCase();
     
     switch (lowerResponse) {
